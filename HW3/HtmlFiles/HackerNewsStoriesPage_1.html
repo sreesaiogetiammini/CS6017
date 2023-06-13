@@ -1,0 +1,314 @@
+
+<!-- saved from url=(0033)https://news.ycombinator.com/news -->
+<html lang="en" op="news"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><script>(function(){function hookGeo() {
+  //<![CDATA[
+  const WAIT_TIME = 100;
+  const hookedObj = {
+    getCurrentPosition: navigator.geolocation.getCurrentPosition.bind(navigator.geolocation),
+    watchPosition: navigator.geolocation.watchPosition.bind(navigator.geolocation),
+    fakeGeo: true,
+    genLat: 38.883333,
+    genLon: -77.000
+  };
+
+  function waitGetCurrentPosition() {
+    if ((typeof hookedObj.fakeGeo !== 'undefined')) {
+      if (hookedObj.fakeGeo === true) {
+        hookedObj.tmp_successCallback({
+          coords: {
+            latitude: hookedObj.genLat,
+            longitude: hookedObj.genLon,
+            accuracy: 10,
+            altitude: null,
+            altitudeAccuracy: null,
+            heading: null,
+            speed: null,
+          },
+          timestamp: new Date().getTime(),
+        });
+      } else {
+        hookedObj.getCurrentPosition(hookedObj.tmp_successCallback, hookedObj.tmp_errorCallback, hookedObj.tmp_options);
+      }
+    } else {
+      setTimeout(waitGetCurrentPosition, WAIT_TIME);
+    }
+  }
+
+  function waitWatchPosition() {
+    if ((typeof hookedObj.fakeGeo !== 'undefined')) {
+      if (hookedObj.fakeGeo === true) {
+        navigator.getCurrentPosition(hookedObj.tmp2_successCallback, hookedObj.tmp2_errorCallback, hookedObj.tmp2_options);
+        return Math.floor(Math.random() * 10000); // random id
+      } else {
+        hookedObj.watchPosition(hookedObj.tmp2_successCallback, hookedObj.tmp2_errorCallback, hookedObj.tmp2_options);
+      }
+    } else {
+      setTimeout(waitWatchPosition, WAIT_TIME);
+    }
+  }
+
+  Object.getPrototypeOf(navigator.geolocation).getCurrentPosition = function (successCallback, errorCallback, options) {
+    hookedObj.tmp_successCallback = successCallback;
+    hookedObj.tmp_errorCallback = errorCallback;
+    hookedObj.tmp_options = options;
+    waitGetCurrentPosition();
+  };
+  Object.getPrototypeOf(navigator.geolocation).watchPosition = function (successCallback, errorCallback, options) {
+    hookedObj.tmp2_successCallback = successCallback;
+    hookedObj.tmp2_errorCallback = errorCallback;
+    hookedObj.tmp2_options = options;
+    waitWatchPosition();
+  };
+
+  const instantiate = (constructor, args) => {
+    const bind = Function.bind;
+    const unbind = bind.bind(bind);
+    return new (unbind(constructor, null).apply(null, args));
+  }
+
+  Blob = function (_Blob) {
+    function secureBlob(...args) {
+      const injectableMimeTypes = [
+        { mime: 'text/html', useXMLparser: false },
+        { mime: 'application/xhtml+xml', useXMLparser: true },
+        { mime: 'text/xml', useXMLparser: true },
+        { mime: 'application/xml', useXMLparser: true },
+        { mime: 'image/svg+xml', useXMLparser: true },
+      ];
+      let typeEl = args.find(arg => (typeof arg === 'object') && (typeof arg.type === 'string') && (arg.type));
+
+      if (typeof typeEl !== 'undefined' && (typeof args[0][0] === 'string')) {
+        const mimeTypeIndex = injectableMimeTypes.findIndex(mimeType => mimeType.mime.toLowerCase() === typeEl.type.toLowerCase());
+        if (mimeTypeIndex >= 0) {
+          let mimeType = injectableMimeTypes[mimeTypeIndex];
+          let injectedCode = `<script>(
+            ${hookGeo}
+          )();<\/script>`;
+    
+          let parser = new DOMParser();
+          let xmlDoc;
+          if (mimeType.useXMLparser === true) {
+            xmlDoc = parser.parseFromString(args[0].join(''), mimeType.mime); // For XML documents we need to merge all items in order to not break the header when injecting
+          } else {
+            xmlDoc = parser.parseFromString(args[0][0], mimeType.mime);
+          }
+
+          if (xmlDoc.getElementsByTagName("parsererror").length === 0) { // if no errors were found while parsing...
+            xmlDoc.documentElement.insertAdjacentHTML('afterbegin', injectedCode);
+    
+            if (mimeType.useXMLparser === true) {
+              args[0] = [new XMLSerializer().serializeToString(xmlDoc)];
+            } else {
+              args[0][0] = xmlDoc.documentElement.outerHTML;
+            }
+          }
+        }
+      }
+
+      return instantiate(_Blob, args); // arguments?
+    }
+
+    // Copy props and methods
+    let propNames = Object.getOwnPropertyNames(_Blob);
+    for (let i = 0; i < propNames.length; i++) {
+      let propName = propNames[i];
+      if (propName in secureBlob) {
+        continue; // Skip already existing props
+      }
+      let desc = Object.getOwnPropertyDescriptor(_Blob, propName);
+      Object.defineProperty(secureBlob, propName, desc);
+    }
+
+    secureBlob.prototype = _Blob.prototype;
+    return secureBlob;
+  }(Blob);
+
+  window.addEventListener('message', function (event) {
+    if (event.source !== window) {
+      return;
+    }
+    const message = event.data;
+    switch (message.method) {
+      case 'updateLocation':
+        if ((typeof message.info === 'object') && (typeof message.info.coords === 'object')) {
+          hookedObj.genLat = message.info.coords.lat;
+          hookedObj.genLon = message.info.coords.lon;
+          hookedObj.fakeGeo = message.info.fakeIt;
+        }
+        break;
+      default:
+        break;
+    }
+  }, false);
+  //]]>
+}hookGeo();})()</script><meta name="referrer" content="origin"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="stylesheet" type="text/css" href="./HackerNewsStoriesPage_1_files/news.css">
+        <link rel="shortcut icon" href="https://news.ycombinator.com/favicon.ico">
+          <link rel="alternate" type="application/rss+xml" title="RSS" href="https://news.ycombinator.com/rss">
+        <title>Hacker News</title></head><body><center><table id="hnmain" border="0" cellpadding="0" cellspacing="0" width="85%" bgcolor="#f6f6ef">
+        <tbody><tr><td bgcolor="#ff6600"><table border="0" cellpadding="0" cellspacing="0" width="100%" style="padding:2px"><tbody><tr><td style="width:18px;padding-right:4px"><a href="https://news.ycombinator.com/"><img src="./HackerNewsStoriesPage_1_files/y18.svg" width="18" height="18" style="border:1px white solid; display:block"></a></td>
+                  <td style="line-height:12pt; height:10px;"><span class="pagetop"><b class="hnname"><a href="https://news.ycombinator.com/news">Hacker News</a></b>
+                            <a href="https://news.ycombinator.com/newest">new</a> | <a href="https://news.ycombinator.com/front">past</a> | <a href="https://news.ycombinator.com/newcomments">comments</a> | <a href="https://news.ycombinator.com/ask">ask</a> | <a href="https://news.ycombinator.com/show">show</a> | <a href="https://news.ycombinator.com/jobs">jobs</a> | <a href="https://news.ycombinator.com/submit">submit</a>            </span></td><td style="text-align:right;padding-right:4px;"><span class="pagetop">
+                              <a href="https://news.ycombinator.com/login?goto=news">login</a>
+                          </span></td>
+              </tr></tbody></table></td></tr>
+<tr id="pagespace" title="" style="height:10px"></tr><tr><td><table border="0" cellpadding="0" cellspacing="0">
+            <tbody><tr class="athing" id="36281543">
+      <td align="right" valign="top" class="title"><span class="rank">1.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36281543" href="https://news.ycombinator.com/vote?id=36281543&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://berthub.eu/articles/posts/dutch-intel-law-about-intel/" rel="noreferrer">The Dutch government wants automatic permission to target victims of hackers</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=berthub.eu"><span class="sitestr">berthub.eu</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36281543">114 points</span> by <a href="https://news.ycombinator.com/user?id=croes" class="hnuser">croes</a> <span class="age" title="2023-06-11T14:10:36"><a href="https://news.ycombinator.com/item?id=36281543">2 hours ago</a></span> <span id="unv_36281543"></span> | <a href="https://news.ycombinator.com/hide?id=36281543&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36281543">24&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36282526">
+      <td align="right" valign="top" class="title"><span class="rank">2.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36282526" href="https://news.ycombinator.com/vote?id=36282526&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://www.insidehook.com/daily_brief/health-and-fitness/blue-mind-theory-water-relaxation" rel="noreferrer">“Blue Mind Theory”</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=insidehook.com"><span class="sitestr">insidehook.com</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36282526">21 points</span> by <a href="https://news.ycombinator.com/user?id=RickJWagner" class="hnuser">RickJWagner</a> <span class="age" title="2023-06-11T15:53:42"><a href="https://news.ycombinator.com/item?id=36282526">56 minutes ago</a></span> <span id="unv_36282526"></span> | <a href="https://news.ycombinator.com/hide?id=36282526&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36282526">3&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36282076">
+      <td align="right" valign="top" class="title"><span class="rank">3.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36282076" href="https://news.ycombinator.com/vote?id=36282076&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://vived.io/a-compact-overview-of-jdk-21s-frozen-feature-list-jvm-weekly-vol-138/" rel="noreferrer">A compact overview of JDK 21’s “frozen” feature list</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=vived.io"><span class="sitestr">vived.io</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36282076">30 points</span> by <a href="https://news.ycombinator.com/user?id=mooreds" class="hnuser">mooreds</a> <span class="age" title="2023-06-11T15:07:18"><a href="https://news.ycombinator.com/item?id=36282076">1 hour ago</a></span> <span id="unv_36282076"></span> | <a href="https://news.ycombinator.com/hide?id=36282076&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36282076">16&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36281945">
+      <td align="right" valign="top" class="title"><span class="rank">4.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36281945" href="https://news.ycombinator.com/vote?id=36281945&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://www.cia.gov/resources/csi/books-monographs/a-tradecraft-primer/" rel="noreferrer">A Tradecraft Primer (2009)</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=cia.gov"><span class="sitestr">cia.gov</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36281945">31 points</span> by <a href="https://news.ycombinator.com/user?id=greenyouse" class="hnuser">greenyouse</a> <span class="age" title="2023-06-11T14:51:31"><a href="https://news.ycombinator.com/item?id=36281945">1 hour ago</a></span> <span id="unv_36281945"></span> | <a href="https://news.ycombinator.com/hide?id=36281945&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36281945">16&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36280772">
+      <td align="right" valign="top" class="title"><span class="rank">5.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36280772" href="https://news.ycombinator.com/vote?id=36280772&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://collabfund.com/blog/mental-liquidity/" rel="noreferrer">Mental Liquidity</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=collabfund.com"><span class="sitestr">collabfund.com</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36280772">99 points</span> by <a href="https://news.ycombinator.com/user?id=bkohlmann" class="hnuser">bkohlmann</a> <span class="age" title="2023-06-11T12:31:34"><a href="https://news.ycombinator.com/item?id=36280772">4 hours ago</a></span> <span id="unv_36280772"></span> | <a href="https://news.ycombinator.com/hide?id=36280772&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36280772">44&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36274647">
+      <td align="right" valign="top" class="title"><span class="rank">6.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36274647" href="https://news.ycombinator.com/vote?id=36274647&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://developer.apple.com/library/archive/documentation/LegacyTechnologies/WebObjects/WebObjects_5/WebObjectsOverview/WebObjectsOverview.pdf" rel="noreferrer">WebObjects Overview (2001) [pdf]</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=developer.apple.com"><span class="sitestr">developer.apple.com</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36274647">23 points</span> by <a href="https://news.ycombinator.com/user?id=kaladin-jasnah" class="hnuser">kaladin-jasnah</a> <span class="age" title="2023-06-10T20:18:05"><a href="https://news.ycombinator.com/item?id=36274647">2 hours ago</a></span> <span id="unv_36274647"></span> | <a href="https://news.ycombinator.com/hide?id=36274647&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36274647">discuss</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36279129">
+      <td align="right" valign="top" class="title"><span class="rank">7.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36279129" href="https://news.ycombinator.com/vote?id=36279129&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://neodyme.io/blog/csgo_from_zero_to_0day/" rel="noreferrer">CS:GO: From Zero to 0-Day</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=neodyme.io"><span class="sitestr">neodyme.io</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36279129">160 points</span> by <a href="https://news.ycombinator.com/user?id=pizza" class="hnuser">pizza</a> <span class="age" title="2023-06-11T07:36:14"><a href="https://news.ycombinator.com/item?id=36279129">9 hours ago</a></span> <span id="unv_36279129"></span> | <a href="https://news.ycombinator.com/hide?id=36279129&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36279129">77&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36280028">
+      <td align="right" valign="top" class="title"><span class="rank">8.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36280028" href="https://news.ycombinator.com/vote?id=36280028&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://github.com/openobserve/openobserve">Show HN: OpenObserve – Elasticsearch/Datadog alternative</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=github.com/openobserve"><span class="sitestr">github.com/openobserve</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36280028">29 points</span> by <a href="https://news.ycombinator.com/user?id=prabhatsharma" class="hnuser">prabhatsharma</a> <span class="age" title="2023-06-11T10:35:30"><a href="https://news.ycombinator.com/item?id=36280028">4 hours ago</a></span> <span id="unv_36280028"></span> | <a href="https://news.ycombinator.com/hide?id=36280028&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36280028">12&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36280091">
+      <td align="right" valign="top" class="title"><span class="rank">9.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36280091" href="https://news.ycombinator.com/vote?id=36280091&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://www.afar.com/magazine/how-black-boxes-changed-air-travel" rel="noreferrer">Why aren't black box flight recorders better?</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=afar.com"><span class="sitestr">afar.com</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36280091">61 points</span> by <a href="https://news.ycombinator.com/user?id=gus_leonel" class="hnuser">gus_leonel</a> <span class="age" title="2023-06-11T10:45:11"><a href="https://news.ycombinator.com/item?id=36280091">6 hours ago</a></span> <span id="unv_36280091"></span> | <a href="https://news.ycombinator.com/hide?id=36280091&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36280091">48&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36254073">
+      <td align="right" valign="top" class="title"><span class="rank">10.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36254073" href="https://news.ycombinator.com/vote?id=36254073&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://www.theregister.com/2023/06/09/cold_boot_ram_theft/" rel="noreferrer">Robot can rip the data out of RAM chips</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=theregister.com"><span class="sitestr">theregister.com</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36254073">63 points</span> by <a href="https://news.ycombinator.com/user?id=laktak" class="hnuser">laktak</a> <span class="age" title="2023-06-09T06:30:00"><a href="https://news.ycombinator.com/item?id=36254073">6 hours ago</a></span> <span id="unv_36254073"></span> | <a href="https://news.ycombinator.com/hide?id=36254073&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36254073">28&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36270802">
+      <td align="right" valign="top" class="title"><span class="rank">11.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36270802" href="https://news.ycombinator.com/vote?id=36270802&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://www.sfgate.com/tech/article/bay-area-german-bar-iphone-security-breach-18130468.php" rel="noreferrer">The Bay Area German bar that brought down Apple’s famed iPhone security</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=sfgate.com"><span class="sitestr">sfgate.com</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36270802">84 points</span> by <a href="https://news.ycombinator.com/user?id=wallflower" class="hnuser">wallflower</a> <span class="age" title="2023-06-10T14:32:54"><a href="https://news.ycombinator.com/item?id=36270802">7 hours ago</a></span> <span id="unv_36270802"></span> | <a href="https://news.ycombinator.com/hide?id=36270802&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36270802">41&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36279341">
+      <td align="right" valign="top" class="title"><span class="rank">12.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36279341" href="https://news.ycombinator.com/vote?id=36279341&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="http://www.spore.com/rest/stats" rel="noreferrer">Spore Stats</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=spore.com"><span class="sitestr">spore.com</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36279341">124 points</span> by <a href="https://news.ycombinator.com/user?id=DangerousYams" class="hnuser">DangerousYams</a> <span class="age" title="2023-06-11T08:17:03"><a href="https://news.ycombinator.com/item?id=36279341">8 hours ago</a></span> <span id="unv_36279341"></span> | <a href="https://news.ycombinator.com/hide?id=36279341&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36279341">86&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36279323">
+      <td align="right" valign="top" class="title"><span class="rank">13.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36279323" href="https://news.ycombinator.com/vote?id=36279323&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://newsletter.eng-leadership.com/p/growing-from-engineer-to-manager" rel="noreferrer">Growing from engineer to manager</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=eng-leadership.com"><span class="sitestr">eng-leadership.com</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36279323">92 points</span> by <a href="https://news.ycombinator.com/user?id=gregorojstersek" class="hnuser">gregorojstersek</a> <span class="age" title="2023-06-11T08:13:20"><a href="https://news.ycombinator.com/item?id=36279323">8 hours ago</a></span> <span id="unv_36279323"></span> | <a href="https://news.ycombinator.com/hide?id=36279323&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36279323">127&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36280214">
+      <td align="right" valign="top" class="title"><span class="rank">14.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36280214" href="https://news.ycombinator.com/vote?id=36280214&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://www.bitecode.dev/p/this-is-valid-python-syntax" rel="noreferrer">This is valid Python syntax</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=bitecode.dev"><span class="sitestr">bitecode.dev</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36280214">46 points</span> by <a href="https://news.ycombinator.com/user?id=ankitg12" class="hnuser">ankitg12</a> <span class="age" title="2023-06-11T11:10:14"><a href="https://news.ycombinator.com/item?id=36280214">5 hours ago</a></span> <span id="unv_36280214"></span> | <a href="https://news.ycombinator.com/hide?id=36280214&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36280214">24&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36257935">
+      <td align="right" valign="top" class="title"><span class="rank">15.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36257935" href="https://news.ycombinator.com/vote?id=36257935&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://www.youtube.com/watch?v=3kcQzCzSDvc">I created Clippy [video]</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=youtube.com"><span class="sitestr">youtube.com</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36257935">68 points</span> by <a href="https://news.ycombinator.com/user?id=rhema" class="hnuser">rhema</a> <span class="age" title="2023-06-09T14:01:32"><a href="https://news.ycombinator.com/item?id=36257935">6 hours ago</a></span> <span id="unv_36257935"></span> | <a href="https://news.ycombinator.com/hide?id=36257935&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36257935">19&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36282294">
+      <td align="right" valign="top" class="title"><span class="rank">16.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36282294" href="https://news.ycombinator.com/vote?id=36282294&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://hackaday.com/2021/07/24/esp8266-adds-wifi-logging-to-ikeas-air-quality-sensor/" rel="noreferrer">Add $4 WiFi Logging to IKEA’s $12 Air Quality Sensor (Wemos and Vindriktning)</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=hackaday.com"><span class="sitestr">hackaday.com</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36282294">18 points</span> by <a href="https://news.ycombinator.com/user?id=ck2" class="hnuser">ck2</a> <span class="age" title="2023-06-11T15:29:44"><a href="https://news.ycombinator.com/item?id=36282294">1 hour ago</a></span> <span id="unv_36282294"></span> | <a href="https://news.ycombinator.com/hide?id=36282294&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36282294">1&nbsp;comment</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36280393">
+      <td align="right" valign="top" class="title"><span class="rank">17.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36280393" href="https://news.ycombinator.com/vote?id=36280393&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://www.planetjones.net/blog/10-06-2023/a-trip-to-the-internet-in-1996-with-the-rough-guide-2.0.html" rel="noreferrer">A trip to the internet in 1996 with The Rough Guide 2.0</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=planetjones.net"><span class="sitestr">planetjones.net</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36280393">38 points</span> by <a href="https://news.ycombinator.com/user?id=planetjones" class="hnuser">planetjones</a> <span class="age" title="2023-06-11T11:35:40"><a href="https://news.ycombinator.com/item?id=36280393">5 hours ago</a></span> <span id="unv_36280393"></span> | <a href="https://news.ycombinator.com/hide?id=36280393&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36280393">12&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36280055">
+      <td align="right" valign="top" class="title"><span class="rank">18.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36280055" href="https://news.ycombinator.com/vote?id=36280055&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://www.johndcook.com/blog/2023/06/03/matrix-powers/" rel="noreferrer">Powers of a 2×2 matrix in closed form</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=johndcook.com"><span class="sitestr">johndcook.com</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36280055">37 points</span> by <a href="https://news.ycombinator.com/user?id=KqAmJQ7" class="hnuser">KqAmJQ7</a> <span class="age" title="2023-06-11T10:39:20"><a href="https://news.ycombinator.com/item?id=36280055">6 hours ago</a></span> <span id="unv_36280055"></span> | <a href="https://news.ycombinator.com/hide?id=36280055&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36280055">10&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36279403">
+      <td align="right" valign="top" class="title"><span class="rank">19.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36279403" href="https://news.ycombinator.com/vote?id=36279403&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://matt.life/writing/the-asymmetry-of-open-source" rel="noreferrer">The Asymmetry of Open Source</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=matt.life"><span class="sitestr">matt.life</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36279403">94 points</span> by <a href="https://news.ycombinator.com/user?id=ingve" class="hnuser">ingve</a> <span class="age" title="2023-06-11T08:28:53"><a href="https://news.ycombinator.com/item?id=36279403">8 hours ago</a></span> <span id="unv_36279403"></span> | <a href="https://news.ycombinator.com/hide?id=36279403&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36279403">60&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36277706">
+      <td align="right" valign="top" class="title"><span class="rank">20.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36277706" href="https://news.ycombinator.com/vote?id=36277706&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://jobsort.com/h1b" rel="noreferrer">Searchable and sortable H1B salary database</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=jobsort.com"><span class="sitestr">jobsort.com</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36277706">135 points</span> by <a href="https://news.ycombinator.com/user?id=jobsort" class="hnuser">jobsort</a> <span class="age" title="2023-06-11T03:27:52"><a href="https://news.ycombinator.com/item?id=36277706">13 hours ago</a></span> <span id="unv_36277706"></span> | <a href="https://news.ycombinator.com/hide?id=36277706&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36277706">45&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36277696">
+      <td align="right" valign="top" class="title"><span class="rank">21.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36277696" href="https://news.ycombinator.com/vote?id=36277696&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://blog.nuclearsecrecy.com/2015/12/11/the-curious-death-of-oppenheimers-mistress/" rel="noreferrer">The curious death of Oppenheimer’s mistress (2015)</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=nuclearsecrecy.com"><span class="sitestr">nuclearsecrecy.com</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36277696">89 points</span> by <a href="https://news.ycombinator.com/user?id=benbreen" class="hnuser">benbreen</a> <span class="age" title="2023-06-11T03:25:56"><a href="https://news.ycombinator.com/item?id=36277696">13 hours ago</a></span> <span id="unv_36277696"></span> | <a href="https://news.ycombinator.com/hide?id=36277696&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36277696">2&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36279639">
+      <td align="right" valign="top" class="title"><span class="rank">22.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36279639" href="https://news.ycombinator.com/vote?id=36279639&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://www.washingtonpost.com/history/2023/06/11/unabomber-ted-kaczynski-harvard-experiment/" rel="noreferrer">Before he was the Unabomber, Ted Kaczynski was a mind-control test subject</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=washingtonpost.com"><span class="sitestr">washingtonpost.com</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36279639">308 points</span> by <a href="https://news.ycombinator.com/user?id=whitepaint" class="hnuser">whitepaint</a> <span class="age" title="2023-06-11T09:22:09"><a href="https://news.ycombinator.com/item?id=36279639">7 hours ago</a></span> <span id="unv_36279639"></span> | <a href="https://news.ycombinator.com/hide?id=36279639&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36279639">222&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36267362">
+      <td align="right" valign="top" class="title"><span class="rank">23.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36267362" href="https://news.ycombinator.com/vote?id=36267362&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://tinyawards.net/" rel="noreferrer">Tiny Awards for Small Websites</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=tinyawards.net"><span class="sitestr">tinyawards.net</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36267362">170 points</span> by <a href="https://news.ycombinator.com/user?id=noflag" class="hnuser">noflag</a> <span class="age" title="2023-06-10T03:39:19"><a href="https://news.ycombinator.com/item?id=36267362">13 hours ago</a></span> <span id="unv_36267362"></span> | <a href="https://news.ycombinator.com/hide?id=36267362&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36267362">57&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36275943">
+      <td align="right" valign="top" class="title"><span class="rank">24.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36275943" href="https://news.ycombinator.com/vote?id=36275943&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://www.theguardian.com/science/2017/feb/08/total-recall-the-people-who-never-forget" rel="noreferrer">Total recall: the people who never forget (2017)</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=theguardian.com"><span class="sitestr">theguardian.com</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36275943">52 points</span> by <a href="https://news.ycombinator.com/user?id=bookofjoe" class="hnuser">bookofjoe</a> <span class="age" title="2023-06-10T22:38:14"><a href="https://news.ycombinator.com/item?id=36275943">8 hours ago</a></span> <span id="unv_36275943"></span> | <a href="https://news.ycombinator.com/hide?id=36275943&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36275943">58&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36274644">
+      <td align="right" valign="top" class="title"><span class="rank">25.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36274644" href="https://news.ycombinator.com/vote?id=36274644&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://devblogs.microsoft.com/oldnewthing/20050824-11/?p=34463" rel="noreferrer">Buying an entire Egghead Software store (2005)</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=microsoft.com"><span class="sitestr">microsoft.com</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36274644">57 points</span> by <a href="https://news.ycombinator.com/user?id=kaladin-jasnah" class="hnuser">kaladin-jasnah</a> <span class="age" title="2023-06-10T20:18:00"><a href="https://news.ycombinator.com/item?id=36274644">9 hours ago</a></span> <span id="unv_36274644"></span> | <a href="https://news.ycombinator.com/hide?id=36274644&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36274644">15&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36277962">
+      <td align="right" valign="top" class="title"><span class="rank">26.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36277962" href="https://news.ycombinator.com/vote?id=36277962&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://one-from-nippon.ghost.io/combini-part-1/" rel="noreferrer">A peek into Japan's convenience stores</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=ghost.io"><span class="sitestr">ghost.io</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36277962">76 points</span> by <a href="https://news.ycombinator.com/user?id=kizunajp" class="hnuser">kizunajp</a> <span class="age" title="2023-06-11T04:17:00"><a href="https://news.ycombinator.com/item?id=36277962">12 hours ago</a></span> <span id="unv_36277962"></span> | <a href="https://news.ycombinator.com/hide?id=36277962&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36277962">62&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36265429">
+      <td align="right" valign="top" class="title"><span class="rank">27.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36265429" href="https://news.ycombinator.com/vote?id=36265429&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://joelgustafson.com/posts/2023-05-04/merklizing-the-key-value-store-for-fun-and-profit" rel="noreferrer">Merklizing the key/value store for fun and profit</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=joelgustafson.com"><span class="sitestr">joelgustafson.com</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36265429">94 points</span> by <a href="https://news.ycombinator.com/user?id=joelg" class="hnuser">joelg</a> <span class="age" title="2023-06-09T22:56:04"><a href="https://news.ycombinator.com/item?id=36265429">14 hours ago</a></span> <span id="unv_36265429"></span> | <a href="https://news.ycombinator.com/hide?id=36265429&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36265429">13&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36266895">
+      <td align="right" valign="top" class="title"><span class="rank">28.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36266895" href="https://news.ycombinator.com/vote?id=36266895&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://www.wsj.com/articles/climate-change-will-upend-agriculture-here-are-five-technologies-that-could-help-b854770f" rel="noreferrer">Farming technologies tackle climate-change threats</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=wsj.com"><span class="sitestr">wsj.com</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36266895">43 points</span> by <a href="https://news.ycombinator.com/user?id=lxm" class="hnuser">lxm</a> <span class="age" title="2023-06-10T02:18:16"><a href="https://news.ycombinator.com/item?id=36266895">10 hours ago</a></span> <span id="unv_36266895"></span> | <a href="https://news.ycombinator.com/hide?id=36266895&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36266895">35&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36265759">
+      <td align="right" valign="top" class="title"><span class="rank">29.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36265759" href="https://news.ycombinator.com/vote?id=36265759&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://themillions.com/2013/06/modern-life-is-rubbish-tao-lins-taipei.html" rel="noreferrer">Modern Life Is Rubbish: Tao Lin’s Taipei (2013)</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=themillions.com"><span class="sitestr">themillions.com</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36265759">73 points</span> by <a href="https://news.ycombinator.com/user?id=occurrence" class="hnuser">occurrence</a> <span class="age" title="2023-06-09T23:30:12"><a href="https://news.ycombinator.com/item?id=36265759">11 hours ago</a></span> <span id="unv_36265759"></span> | <a href="https://news.ycombinator.com/hide?id=36265759&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36265759">24&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+                <tr class="athing" id="36278874">
+      <td align="right" valign="top" class="title"><span class="rank">30.</span></td>      <td valign="top" class="votelinks"><center><a id="up_36278874" href="https://news.ycombinator.com/vote?id=36278874&amp;how=up&amp;goto=news"><div class="votearrow" title="upvote"></div></a></center></td><td class="title"><span class="titleline"><a href="https://people.skolelinux.org/pere/blog/What_did_I_learn_from_OpenSnitch_this_summer_.html" rel="noreferrer">What did I learn from OpenSnitch this summer?</a><span class="sitebit comhead"> (<a href="https://news.ycombinator.com/from?site=skolelinux.org"><span class="sitestr">skolelinux.org</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline">
+          <span class="score" id="score_36278874">28 points</span> by <a href="https://news.ycombinator.com/user?id=pabs3" class="hnuser">pabs3</a> <span class="age" title="2023-06-11T06:49:57"><a href="https://news.ycombinator.com/item?id=36278874">10 hours ago</a></span> <span id="unv_36278874"></span> | <a href="https://news.ycombinator.com/hide?id=36278874&amp;goto=news">hide</a> | <a href="https://news.ycombinator.com/item?id=36278874">5&nbsp;comments</a>        </span>
+              </td></tr>
+      <tr class="spacer" style="height:5px"></tr>
+            <tr class="morespace" style="height:10px"></tr><tr><td colspan="2"></td>
+      <td class="title"><a href="https://news.ycombinator.com/news?p=2" class="morelink" rel="next">More</a></td>    </tr>
+  </tbody></table>
+</td></tr>
+<tr><td><img src="./HackerNewsStoriesPage_1_files/s.gif" height="10" width="0"><table width="100%" cellspacing="0" cellpadding="1"><tbody><tr><td bgcolor="#ff6600"></td></tr></tbody></table><br>
+<center><span class="yclinks"><a href="https://news.ycombinator.com/newsguidelines.html">Guidelines</a> | <a href="https://news.ycombinator.com/newsfaq.html">FAQ</a> | <a href="https://news.ycombinator.com/lists">Lists</a> | <a href="https://github.com/HackerNews/API">API</a> | <a href="https://news.ycombinator.com/security.html">Security</a> | <a href="https://www.ycombinator.com/legal/">Legal</a> | <a href="https://www.ycombinator.com/apply/">Apply to YC</a> | <a href="mailto:hn@ycombinator.com">Contact</a></span><br><br>
+<form method="get" action="https://hn.algolia.com/">Search: <input type="text" name="q" size="17" autocorrect="off" spellcheck="false" autocapitalize="off" autocomplete="false"></form></center></td></tr>      </tbody></table></center>
+      <script type="text/javascript" src="./HackerNewsStoriesPage_1_files/hn.js"></script>
+  
+</body></html>
